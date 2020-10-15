@@ -42,6 +42,8 @@ DataBridge class manages resources and match them with keyword set in a template
             parameters:
                 replacement: text2
 
+See [tests](https://github.com/20centcroak/pyDocxReport) to see this example implemented.
+
 ## DocxTemplate
 The DocxTemplate class makes use of python-docx to modify a word document.
 Use DataBridge for a standard operation and use DocxTemplate when you need to tune some replacements.

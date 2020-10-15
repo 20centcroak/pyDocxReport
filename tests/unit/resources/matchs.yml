@@ -1,0 +1,23 @@
+_keyword1_:
+  replacewith: string
+  parameters:
+      replacement: text1
+_myimage1set_:
+  replacewith: images
+  parameters:
+      replacement: imageset1
+      width: 120
+_logo_:
+  replacewith: images
+  parameters:
+      replacement: imageset2
+      height: 10
+_keyword2_:
+  replacewith: table
+  parameters:
+      replacement: table1
+      header: false
+_text2_:
+  replacewith: string
+  parameters:
+      replacement: text2

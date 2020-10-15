@@ -4,9 +4,10 @@ from pandas import DataFrame
 import logging
 import re
 
+
 class DocxTemplate:
     """
-    The Word class makes use of python-docx to modify word document.
+    The DocxTemplate class makes use of python-docx to modify a word document.
     """
 
     def __init__(self, filename: str):
@@ -16,48 +17,39 @@ class DocxTemplate:
         filename: file name that points on a valide >2007 MS Word document'''
         self.doc = Document(filename)
 
-    def replaceKeyword(self, keyword: str, replacement):
-        self.replaceKeywordInParagraphs(
-            keyword, replacement, self.doc.paragraphs)
-        self.replaceKeywordInSections(keyword, replacement)
-        self.replaceKeywordInTables(keyword, replacement, self.doc.tables)
-
-    def replaceKeywordInSections(self, keyword, replacement):
-        for section in self.doc.sections:
-            elements = [section.header, section.footer, section.even_page_header, section.even_page_footer, section.first_page_footer, section.first_page_header]
-            for element in elements:
-                self.replaceKeywordInParagraphs(
-                    keyword, replacement, element.paragraphs)
-                self.replaceKeywordInTables(
-                    keyword, replacement, element.tables)
-
-    def replaceKeywordInParagraphs(self, keyword, replacement, paragraphs):
-        for paragraph in paragraphs:
-            if keyword in paragraph.text.strip():
-                paragraph.text = paragraph.text.replace(keyword, replacement)
-
-    def replaceKeywordInTables(self, keyword, replacement, tables):
-        for table in tables:
-            for row in table.rows:
-                for cell in row.cells:
-                    for paragraph in cell.paragraphs:
-                        if keyword in paragraph.text.strip():
-                            paragraph.text = paragraph.text.replace(keyword, replacement)
+    def replaceKeywordByString(self, keyword: str, replacement: str):
+        '''replace a keyword by the given replacement string, whatever its position is in the document
+        Parameters
+        ----------
+        keyword: keyword to search for
+        replacement: replacement string
+        '''
+        paragraphs = self._find_paragraphs(keyword)
+        self._replaceKeyword(paragraphs, keyword, replacement)
 
     def replaceKeywordByImages(self, keyword, images, width=None, height=None):
-        for paragraph in self.doc.paragraphs:
-            if keyword in paragraph.text.strip():
-                paragraph.text = ''
-                for image in images:
-                    run = paragraph.add_run()
-                    if width and height:
-                        run.add_picture(image, width=Mm(width), height=Mm(height))
-                    elif width:
-                        run.add_picture(image, width=Mm(width))
-                    elif height:
-                        run.add_picture(image, height=Mm(height))
-                    else:
-                        run.add_picture(image)
+        '''replace a keyword in a paragraph by the given images
+        Parameters
+        ----------
+        keyword: keyword to search for
+        images: list of images
+        width: expected width of images in the document
+        height: expected height of images in the document
+        '''
+        paragraphs = self._find_paragraphs(keyword)
+        self._replaceKeyword(paragraphs, keyword, '')
+        for paragraph in paragraphs:
+            for image in images:
+                run = paragraph.add_run()
+                if width and height:
+                    run.add_picture(image, width=Mm(
+                        width), height=Mm(height))
+                elif width:
+                    run.add_picture(image, width=Mm(width))
+                elif height:
+                    run.add_picture(image, height=Mm(height))
+                else:
+                    run.add_picture(image)
 
     def findTableByKeyword(self, keyword: str):
         '''find a table in a document by finding a keyword in its cells
@@ -127,7 +119,7 @@ class DocxTemplate:
         for colindex, cell in enumerate(headercells):
             cell.text = str(header[colindex])
 
-    def fillTableWithData(self, table, data: DataFrame, from_row: int=0):
+    def fillTableWithData(self, table, data: DataFrame, from_row: int = 0):
         '''fill the given table with the associated data
         Parameters
         ----------
@@ -136,7 +128,7 @@ class DocxTemplate:
         from_row: start filling at this given row index (first row is from_row=0)
         '''
         table.autofit = True
-        table.style = 'Table Grid'
+        # table.style = 'Table Grid'
 
         count = from_row
         for _, row in data.iterrows():
@@ -144,7 +136,7 @@ class DocxTemplate:
                 row_cells = table.rows[count].cells
             else:
                 row_cells = table.add_row().cells
-            count+=1
+            count += 1
             for colindex, cell in enumerate(row_cells):
                 if colindex < len(row):
                     cell.text = str(row[colindex])
@@ -156,3 +148,43 @@ class DocxTemplate:
         filename: file name of the destination file
         '''
         self.doc.save(filename)
+
+    def _find_paragraphs(self, keyword):
+        paragraphs = self._findKeywordInSections(keyword)
+        paragraphs += self._findKeywordInParagraphs(
+            keyword, self.doc.paragraphs)
+        paragraphs += self._findKeywordInTables(keyword, self.doc.tables)
+        return paragraphs
+
+    def _findKeywordInSections(self, keyword):
+        paragraphs = []
+        for section in self.doc.sections:
+            elements = [section.header, section.footer, section.even_page_header,
+                        section.even_page_footer, section.first_page_footer, section.first_page_header]
+            for element in elements:
+                paragraphs += (self._findKeywordInParagraphs(
+                    keyword, element.paragraphs))
+                paragraphs += self._findKeywordInTables(
+                    keyword, element.tables)
+        return paragraphs
+
+    def _findKeywordInParagraphs(self, keyword, paragraphs):
+        found = []
+        for paragraph in paragraphs:
+            if keyword in paragraph.text.strip():
+                found.append(paragraph)
+        return found
+
+    def _findKeywordInTables(self, keyword, tables):
+        paragraphs = []
+        for table in tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    for paragraph in cell.paragraphs:
+                        if keyword in paragraph.text.strip():
+                            paragraphs.append(paragraph)
+        return paragraphs
+
+    def _replaceKeyword(self, paragraphs, keyword, replacement):
+        for paragraph in paragraphs:
+            paragraph.text = paragraph.text.replace(keyword, replacement)
