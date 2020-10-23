@@ -2,18 +2,18 @@
 Ease the docx report generation using templates and importing features
 
 ## DataBridge
-DataBridge class manages resources and match them with keyword set in a template docx file.
-All keywords in the template so referenced ar replaced by the appropriate content.
+DataBridge class manages resources and match them with keyword set in a template docx file.  
+All keywords in the template so referenced ar replaced by the appropriate content.  
 An example of use with a yml file as a matchs dictionary is given below:
 
-bridge = DataBridge('path/to/template.docx')
-matchs['_keyword2_'] = {
-                            'type': 'table',
-                            'replacement': df1,
-                            'header': False
-                        }
-bridge.match(matchs)
-bridge.save('path/to/output.docx')
+    bridge = DataBridge('path/to/template.docx')
+    matchs['_keyword2_'] = {
+                                'type': 'table',
+                                'replacement': df1,
+                                'header': False
+                            }
+    bridge.match(matchs)
+    bridge.save('path/to/output.docx')
 
 where matchs is defined as a yml file like below:
 
