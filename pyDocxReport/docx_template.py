@@ -1,5 +1,7 @@
 from docx import Document
 from docx.shared import Mm
+from docx.text.paragraph import Paragraph
+from docx.oxml.xmlchemy import OxmlElement
 from pandas import DataFrame
 import logging
 import re
@@ -38,18 +40,37 @@ class DocxTemplate:
         '''
         paragraphs = self._find_paragraphs(keyword)
         self._replaceKeyword(paragraphs, keyword, '')
-        for paragraph in paragraphs:
-            for image in images:
-                run = paragraph.add_run()
-                if width and height:
-                    run.add_picture(image, width=Mm(
-                        width), height=Mm(height))
-                elif width:
-                    run.add_picture(image, width=Mm(width))
-                elif height:
-                    run.add_picture(image, height=Mm(height))
-                else:
-                    run.add_picture(image)
+        first_image = images[0]
+        other_images = images[1:] if len(images) >1 else []
+        for paragraph in paragraphs:            
+            run = paragraph.add_run()
+            self._add_image_in_paragraph(first_image, width, height, run)
+            for image in other_images:
+                new_paragraph = self._insert_paragraph_after(paragraph, ' ')
+                new_run = new_paragraph.add_run()
+                self._add_image_in_paragraph(image, width, height, new_run)
+
+    def _add_image_in_paragraph(self, image, width, height, run):
+        if width and height:
+            run.add_picture(image, width=Mm(
+                width), height=Mm(height))
+        elif width:
+            run.add_picture(image, width=Mm(width))
+        elif height:
+            run.add_picture(image, height=Mm(height))
+        else:
+            run.add_picture(image)
+
+    def _insert_paragraph_after(self, paragraph, text=None, style=None):
+        """Insert a new paragraph after the given paragraph."""
+        new_p = OxmlElement("w:p")
+        paragraph._p.addnext(new_p)
+        new_para = Paragraph(new_p, paragraph._parent)
+        if text:
+            new_para.add_run(text)
+        if style is not None:
+            new_para.style = style
+        return new_para
 
     def findTableByKeyword(self, keyword: str):
         '''find a table in a document by finding a keyword in its cells
