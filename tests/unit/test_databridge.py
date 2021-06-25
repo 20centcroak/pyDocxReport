@@ -24,4 +24,4 @@ class TestDataBridge(unittest.TestCase):
         }
 
         bridge.match(matchs)
-        bridge.save('tests/unit/output/output.docx')
+        bridge.save('output/output.docx')

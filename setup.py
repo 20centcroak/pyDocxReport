@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyDocxReport", 
-    version="0.0.3",
+    version="0.1.0",
     author="20centCroak",
     author_email="",
     description="module to ease the docx report generation using templates and importing features",
